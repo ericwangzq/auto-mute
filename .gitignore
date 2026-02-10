@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode
+DerivedData/
+*.xcuserstate
+*.xcuserdatad
+xcuserdata/
+*.moved-aside
+
+# Build artifacts
+build/
+*.dmg
+
+# Logs
+*.log
+
+# Swift Package Manager
+.build/
+
+# App config (user-specific)
+*.config.json
