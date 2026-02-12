@@ -2,6 +2,8 @@ import Cocoa
 import ServiceManagement
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+    private let menuBarIconSize = NSSize(width: 18, height: 18)
+
     private var config = AppConfig.loadOrCreate()
     private lazy var controller = AutoMuteController(config: config)
 
@@ -17,12 +19,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func setupStatusItem() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem.button {
-            if let iconURL = Bundle.main.url(forResource: "menubar-icon", withExtension: "png"),
-               let image = NSImage(contentsOf: iconURL) {
-                image.isTemplate = true
+            if let image = makeMenuBarIcon() {
                 button.image = image
+                button.imagePosition = .imageOnly
+                button.imageScaling = .scaleProportionallyDown
                 button.title = ""
             } else {
                 button.title = config.menuBarTitle
@@ -57,6 +59,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         statusItem.menu = menu
         updateMenuState()
+    }
+
+    private func makeMenuBarIcon() -> NSImage? {
+        if #available(macOS 11.0, *) {
+            let icon = NSImage(size: menuBarIconSize)
+            icon.lockFocus()
+
+            let micConfig = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+            let pauseConfig = NSImage.SymbolConfiguration(pointSize: 11, weight: .bold)
+
+            if let mic = NSImage(systemSymbolName: "mic", accessibilityDescription: "AutoMute")?
+                .withSymbolConfiguration(micConfig) {
+                mic.draw(in: NSRect(x: 0, y: 0, width: 12, height: 18))
+            }
+
+            if let pause = NSImage(systemSymbolName: "pause.fill", accessibilityDescription: "Paused")?
+                .withSymbolConfiguration(pauseConfig) {
+                pause.draw(in: NSRect(x: 12, y: 3, width: 6, height: 12))
+            }
+
+            icon.unlockFocus()
+            icon.isTemplate = true
+            return icon
+        }
+
+        guard let iconURL = Bundle.main.url(forResource: "menubar-icon", withExtension: "png"),
+              let image = NSImage(contentsOf: iconURL) else {
+            return nil
+        }
+        image.isTemplate = true
+        image.size = menuBarIconSize
+        return image
     }
 
     func menuWillOpen(_ menu: NSMenu) {
